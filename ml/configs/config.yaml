@@ -1,0 +1,59 @@
+﻿seed: 42
+project_root: .
+paths:
+  image_sources:
+    - data/images_multiclass
+    - data/images_lsd_fmd
+  symptoms_sources:
+    - data/raw/captaingee_livestock_disease_diagnosis_dataset/animal_disease_dataset.csv
+    - data/raw/researcher1548_livestock_symptoms_and_diseases/animal_disease_dataset.csv
+  images_merged: ml/data/processed/images_merged
+  symptoms_merged_csv: ml/data/processed/symptoms_merged.csv
+  splits_manifest_csv: ml/data/processed/splits_manifest.csv
+  artifacts_dir: ml/artifacts
+labels:
+  final_labels: ["Normal", "LSD", "FMD", "ECF", "CBPP"]
+  image_labels: ["Normal", "LSD", "FMD"]
+split:
+  train: 0.7
+  val: 0.15
+  test: 0.15
+image:
+  img_size: 224
+  batch_size: 32
+  head_epochs: 8
+  finetune_epochs: 8
+  fine_tune_at: 120
+  lr_head: 0.001
+  lr_finetune: 0.00005
+  early_stop_patience: 5
+  reduce_lr_patience: 2
+  image_confidence_hi: 0.8
+symptom:
+  model_type: random_forest
+  n_estimators: 500
+  max_depth: 24
+  min_samples_leaf: 1
+fusion:
+  image_weight: 0.65
+  symptom_weight: 0.35
+  temperature: 1.1
+  rule_threshold: 0.62
+  contradiction_threshold: 0.75
+rules:
+  ecf_weights:
+    fever: 0.24
+    swollen_lymph_nodes: 0.22
+    eye_discharge: 0.18
+    nasal_discharge: 0.16
+    difficulty_breathing: 0.12
+    depression: 0.08
+  cbpp_weights:
+    fever: 0.20
+    coughing: 0.25
+    difficulty_breathing: 0.22
+    nasal_discharge: 0.16
+    chest_pain_signs: 0.17
+thresholds:
+  urgent_rule_score: 0.78
+  low_confidence: 0.45

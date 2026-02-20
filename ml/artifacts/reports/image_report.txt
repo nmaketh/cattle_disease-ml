@@ -1,0 +1,9 @@
+              precision    recall  f1-score   support
+
+      Normal       0.93      0.86      0.89       284
+         LSD       0.97      0.85      0.91       230
+         FMD       0.67      0.98      0.80       113
+
+    accuracy                           0.88       627
+   macro avg       0.86      0.90      0.87       627
+weighted avg       0.90      0.88      0.88       627

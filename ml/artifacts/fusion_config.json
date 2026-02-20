@@ -1,0 +1,17 @@
+{
+  "image_weight": 0.65,
+  "symptom_weight": 0.35,
+  "temperature": 1.1,
+  "image_confidence_hi": 0.8,
+  "rule_threshold": 0.62,
+  "contradiction_threshold": 0.75,
+  "urgent_rule_score": 0.78,
+  "low_confidence": 0.45,
+  "final_labels": [
+    "Normal",
+    "LSD",
+    "FMD",
+    "ECF",
+    "CBPP"
+  ]
+}

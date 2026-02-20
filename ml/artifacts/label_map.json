@@ -1,0 +1,14 @@
+{
+  "image_labels": [
+    "Normal",
+    "LSD",
+    "FMD"
+  ],
+  "final_labels": [
+    "Normal",
+    "LSD",
+    "FMD",
+    "ECF",
+    "CBPP"
+  ]
+}

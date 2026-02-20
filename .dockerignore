@@ -1,0 +1,27 @@
+﻿# Python cache
+__pycache__/
+*.py[cod]
+
+# Virtual env / local tooling
+.venv/
+.venv311/
+
+# Git
+.git/
+.gitignore
+
+# Large raw datasets not needed for runtime container
+data/
+logs/
+artifacts/
+scripts/
+
+# Keep deployment package and model artifacts
+!ml/
+!ml/artifacts/
+
+# OS/editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

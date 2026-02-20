@@ -1,0 +1,27 @@
+﻿# Virtual environments
+.venv/
+.venv311/
+
+# Python cache
+__pycache__/
+*.py[cod]
+
+# Local OS/editor
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
+
+# Local data outside packaged ml pipeline
+data/
+
+# Keep deployment assets and ml package
+!ml/
+
+# Runtime logs/temp
+*.log
+tmp/
+
+# Optional: keep repo lean; do not track generated reports by default
+ml/artifacts/reports/*.png
+ml/artifacts/reports/*.json

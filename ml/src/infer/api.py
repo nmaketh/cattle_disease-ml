@@ -53,13 +53,15 @@ async def predict_image_endpoint(file: UploadFile = File(...)) -> Dict[str, Any]
 @app.post("/predict/symptoms")
 def predict_symptoms_endpoint(payload: SymptomsRequest) -> Dict[str, Any]:
     try:
-        probs, label, conf, top_features = predict_symptoms(payload.symptoms)
+        probs, label, conf, top_features, meta = predict_symptoms(payload.symptoms)
         return {
             "label": label,
             "confidence": conf,
             "method": "symptom_model",
             "probs": probs,
             "top_symptoms": top_features,
+            "symptom_model_training_mode": meta.get("training_mode", "unknown"),
+            "symptom_model_warning": meta.get("warning", ""),
         }
     except Exception as ex:
         raise HTTPException(status_code=400, detail=f"Symptom prediction failed: {ex}")

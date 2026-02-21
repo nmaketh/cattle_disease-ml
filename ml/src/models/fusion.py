@@ -12,6 +12,7 @@ class FusionConfig:
     image_weight: float
     symptom_weight: float
     temperature: float
+    symptom_only_min_reliability: float
     image_confidence_hi: float
     rule_threshold: float
     contradiction_threshold: float
@@ -41,6 +42,7 @@ def fuse_predictions(
     cfg: FusionConfig,
     gradcam_path: Optional[str] = None,
     top_symptoms: Optional[list] = None,
+    symptom_reliability: float = 1.0,
 ) -> Dict[str, object]:
     final = _zeros()
 
@@ -84,7 +86,7 @@ def fuse_predictions(
         symptom_cal = _softmax_temperature(symptom_probs, list(symptom_probs.keys()), cfg.temperature)
         best_img = max(image_cal, key=image_cal.get)
         best_img_score = float(image_cal[best_img])
-        symptom_weight = float(cfg.symptom_weight)
+        symptom_weight = float(cfg.symptom_weight) * float(max(0.0, min(1.0, symptom_reliability)))
         image_weight = float(cfg.image_weight)
 
         # If symptom model lacks Normal class, avoid biasing Normal cases toward disease.
@@ -133,9 +135,65 @@ def fuse_predictions(
 
     # Path 3: symptom-only / clinical-rules-driven
     if symptom_probs:
+        min_rel = float(max(0.0, min(1.0, cfg.symptom_only_min_reliability)))
+        reliability = float(max(0.0, min(1.0, symptom_reliability)))
+        max_rule = max(rule_scores.get("ECF", 0.0), rule_scores.get("CBPP", 0.0))
+
+        # If symptom model is weak (e.g., bootstrap_weak), treat symptoms as advisory only
+        # and rely on transparent clinical rules for final decision in symptom-only flow.
+        if reliability < min_rel:
+            if max_rule >= cfg.rule_threshold:
+                best_label = "ECF" if rule_scores.get("ECF", 0.0) >= rule_scores.get("CBPP", 0.0) else "CBPP"
+                final = _zeros()
+                final["ECF"] = float(rule_scores.get("ECF", 0.0))
+                final["CBPP"] = float(rule_scores.get("CBPP", 0.0))
+                rem = max(0.0, 1.0 - (final["ECF"] + final["CBPP"]))
+                final["Normal"] = rem
+                total = sum(final.values())
+                if total > 0:
+                    final = {k: v / total for k, v in final.items()}
+                return {
+                    "final_label": best_label,
+                    "confidence": float(final[best_label]),
+                    "method": "clinical_rules",
+                    "probs": final,
+                    "explain": {
+                        "gradcam_path": gradcam_path,
+                        "top_symptoms": top_symptoms,
+                        "rule_triggers": rule_triggers,
+                    },
+                    "recommendation_flags": {
+                        "retake_image": True,
+                        "contact_vet_urgent": max_rule >= cfg.urgent_rule_score,
+                    },
+                }
+
+            # No strong rule evidence and weak symptom model: avoid overcalling disease.
+            final = _zeros()
+            # Keep a deliberately uncertain distribution to avoid false certainty.
+            final["Normal"] = 0.5
+            final["LSD"] = 0.25
+            final["FMD"] = 0.25
+            return {
+                "final_label": "Normal",
+                "confidence": float(final["Normal"]),
+                "method": "clinical_rules",
+                "probs": final,
+                "explain": {
+                    "gradcam_path": gradcam_path,
+                    "top_symptoms": top_symptoms,
+                    "rule_triggers": rule_triggers,
+                },
+                "recommendation_flags": {
+                    "retake_image": True,
+                    "contact_vet_urgent": False,
+                },
+            }
+
         symptom_cal = _softmax_temperature(symptom_probs, list(symptom_probs.keys()), cfg.temperature)
         for lbl in FINAL_LABELS:
-            final[lbl] = float(symptom_cal.get(lbl, 0.0))
+            final[lbl] = reliability * float(symptom_cal.get(lbl, 0.0))
+        final["Normal"] += (1.0 - reliability)
         for lbl in ["ECF", "CBPP"]:
             final[lbl] = max(final[lbl], float(rule_scores.get(lbl, 0.0)))
 

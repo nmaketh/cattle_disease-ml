@@ -36,7 +36,7 @@ def main() -> int:
     if not (0.0 <= img_conf <= 1.0):
         raise AssertionError(f"Invalid image confidence: {img_conf}")
 
-    sym_probs, sym_label, sym_conf, top = predict_symptoms(symptom_payload)
+    sym_probs, sym_label, sym_conf, top, sym_meta = predict_symptoms(symptom_payload)
     if not (0.0 <= sym_conf <= 1.0):
         raise AssertionError(f"Invalid symptom confidence: {sym_conf}")
 
@@ -60,6 +60,8 @@ def main() -> int:
         "image_confidence": img_conf,
         "symptom_label": sym_label,
         "symptom_confidence": sym_conf,
+        "symptom_model_training_mode": sym_meta.get("training_mode", "unknown"),
+        "symptom_model_warning": sym_meta.get("warning", ""),
         "full_result": full,
         "gradcam_path": grad,
         "top_symptoms_count": len(top) if isinstance(top, list) else 0,

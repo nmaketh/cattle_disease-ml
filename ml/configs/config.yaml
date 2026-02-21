@@ -33,9 +33,20 @@ symptom:
   n_estimators: 500
   max_depth: 24
   min_samples_leaf: 1
+  min_unique_rows: 100
+  bootstrap_if_insufficient: true
+  bootstrap_samples_per_label: 400
+  bootstrap_labels: ["Normal", "LSD", "FMD", "ECF", "CBPP"]
+  bootstrap_core_prob: 0.78
+  bootstrap_support_prob: 0.42
+  bootstrap_noise_prob: 0.03
 fusion:
   image_weight: 0.65
   symptom_weight: 0.35
+  symptom_reliability_real: 1.0
+  symptom_reliability_bootstrap: 0.2
+  symptom_reliability_unknown: 0.5
+  symptom_only_min_reliability: 0.6
   temperature: 1.1
   rule_threshold: 0.62
   contradiction_threshold: 0.75

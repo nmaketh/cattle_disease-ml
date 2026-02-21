@@ -54,19 +54,21 @@ ml/
 - The image classifier is trained and evaluated only on `Normal/LSD/FMD`.
 - ECF/CBPP are never produced by the image branch.
 - If ECF/CBPP are absent in symptom training rows after strict mapping/filtering, the pipeline prints warnings and defers those diagnoses to clinical rules.
-- No hidden synthetic labels are introduced.
+- If symptom rows are too sparse, the symptom model can optionally train in `bootstrap_weak` mode using rule-catalog synthetic rows. This is explicitly recorded in `ml/artifacts/symptom_model_metadata.json` and surfaced in API outputs.
 
 ## Windows (PowerShell) End-to-End Commands
 
 Run from repo root: `c:\cattle_disease_ml`
 
 ```powershell
-python -m venv .venv_ml
-.\.venv_ml\Scripts\Activate.ps1
+python -m venv .venv311
+.\.venv311\Scripts\Activate.ps1
 pip install --upgrade pip
 pip install -r ml\requirements.txt
 $env:PYTHONPATH = "$PWD\ml"
 ```
+
+Recommended runtime: Python 3.11. Python 3.14 may fail to install core ML dependencies (TensorFlow / scikit-learn wheels).
 
 ### 1) Data Engineering
 

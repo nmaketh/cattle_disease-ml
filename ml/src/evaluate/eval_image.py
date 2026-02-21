@@ -25,7 +25,9 @@ def make_ds(df: pd.DataFrame, img_size: int, batch_size: int) -> tf.data.Dataset
         img = tf.cast(img, tf.float32)
         return img, label
 
-    return ds.map(_load, num_parallel_calls=tf.data.AUTOTUNE).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+    ds = ds.map(_load, num_parallel_calls=tf.data.AUTOTUNE)
+    ds = ds.ignore_errors()
+    return ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
 
 def main() -> int:
@@ -43,6 +45,12 @@ def main() -> int:
     ds_test = make_ds(test_df, cfg["image"]["img_size"], cfg["image"]["batch_size"])
 
     model = tf.keras.layers.TFSMLayer(str(image_model_dir), call_endpoint="serve")
+    calib_path = image_model_dir / "decision_calibration.json"
+    class_bias = np.ones(3, dtype=float)
+    if calib_path.exists():
+        import json
+        obj = json.loads(calib_path.read_text(encoding="utf-8"))
+        class_bias = np.array(obj.get("class_bias", [1.0, 1.0, 1.0]), dtype=float)
 
     probs = []
     y_true = []
@@ -53,7 +61,7 @@ def main() -> int:
         probs.append(np.array(out))
         y_true.extend(y_batch.numpy().tolist())
     y_prob = np.concatenate(probs, axis=0)
-    y_pred = np.argmax(y_prob, axis=1)
+    y_pred = np.argmax(y_prob * class_bias[None, :], axis=1)
 
     true_lbl = [ID_TO_LABEL[int(x)] for x in y_true]
     pred_lbl = [ID_TO_LABEL[int(x)] for x in y_pred]

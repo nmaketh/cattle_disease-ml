@@ -71,6 +71,20 @@ def load_image_model() -> tf.keras.layers.TFSMLayer:
 
 
 @lru_cache(maxsize=1)
+def load_image_decision_calibration() -> np.ndarray:
+    p = _ART / "image_model" / "decision_calibration.json"
+    if p.exists():
+        try:
+            obj = read_json(p)
+            arr = np.array(obj.get("class_bias", [1.0, 1.0, 1.0]), dtype=float)
+            if arr.shape == (3,):
+                return arr
+        except Exception:
+            pass
+    return np.array([1.0, 1.0, 1.0], dtype=float)
+
+
+@lru_cache(maxsize=1)
 def load_symptom_model():
     p = _ART / "symptom_model.pkl"
     if not p.exists():
@@ -95,6 +109,23 @@ def load_symptom_features() -> list:
     return read_json(p) if p.exists() else []
 
 
+@lru_cache(maxsize=1)
+def load_symptom_metadata() -> Dict[str, object]:
+    p = _ART / "symptom_model_metadata.json"
+    if p.exists():
+        return read_json(p)
+    return {}
+
+
+def _symptom_reliability_from_metadata(meta: Dict[str, object]) -> float:
+    mode = str(meta.get("training_mode", "unknown")).strip().lower()
+    if mode == "real_only":
+        return float(_CFG["fusion"].get("symptom_reliability_real", 1.0))
+    if mode == "bootstrap_weak":
+        return float(_CFG["fusion"].get("symptom_reliability_bootstrap", 0.2))
+    return float(_CFG["fusion"].get("symptom_reliability_unknown", 0.5))
+
+
 def preprocess_image(image_bytes: bytes) -> tf.Tensor:
     img = Image.open(io.BytesIO(image_bytes)).convert("RGB")
     arr = np.array(img)
@@ -113,6 +144,9 @@ def predict_image(image_bytes: bytes) -> Tuple[Dict[str, float], str, float, Opt
     x = preprocess_image(image_bytes)
     out = _unwrap_output(model(x))
     probs = np.array(out)[0]
+    class_bias = load_image_decision_calibration()
+    probs = probs * class_bias
+    probs = probs / max(float(np.sum(probs)), 1e-8)
 
     labels = ["Normal", "LSD", "FMD"]
     prob_map = {labels[i]: float(probs[i]) for i in range(3)}
@@ -138,12 +172,13 @@ def predict_image(image_bytes: bytes) -> Tuple[Dict[str, float], str, float, Opt
     return prob_map, label, conf, grad_path
 
 
-def predict_symptoms(symptoms_dict: Dict[str, object]) -> Tuple[Dict[str, float], str, float, list]:
+def predict_symptoms(symptoms_dict: Dict[str, object]) -> Tuple[Dict[str, float], str, float, list, Dict[str, object]]:
     model = load_symptom_model()
     features = load_symptom_features()
+    metadata = load_symptom_metadata()
 
     if model is None or not features:
-        return {"Normal": 1.0}, "Normal", 0.5, []
+        return {"Normal": 1.0}, "Normal", 0.5, [], metadata
 
     row = {f: int(float(symptoms_dict.get(f, 0)) > 0) for f in features}
     x = pd.DataFrame([row])[features]
@@ -153,7 +188,7 @@ def predict_symptoms(symptoms_dict: Dict[str, object]) -> Tuple[Dict[str, float]
     label = max(prob_map, key=prob_map.get)
     conf = float(prob_map[label])
     top = symptom_top_features(model, x.iloc[0], features, top_k=8)
-    return prob_map, label, conf, top
+    return prob_map, label, conf, top, metadata
 
 
 def predict_full(image_bytes: Optional[bytes] = None, symptoms_dict: Optional[Dict[str, object]] = None) -> Dict[str, object]:
@@ -167,7 +202,10 @@ def predict_full(image_bytes: Optional[bytes] = None, symptoms_dict: Optional[Di
         image_probs, _, _, gradcam_path = predict_image(image_bytes)
 
     if symptoms_dict:
-        symptom_probs, _, _, top_sym = predict_symptoms(symptoms_dict)
+        symptom_probs, _, _, top_sym, symptom_meta = predict_symptoms(symptoms_dict)
+    else:
+        symptom_meta = load_symptom_metadata()
+    symptom_reliability = _symptom_reliability_from_metadata(symptom_meta)
 
     rule_cfg = RulesConfig(
         ecf_weights=_CFG["rules"]["ecf_weights"],
@@ -180,6 +218,7 @@ def predict_full(image_bytes: Optional[bytes] = None, symptoms_dict: Optional[Di
         image_weight=float(_CFG["fusion"]["image_weight"]),
         symptom_weight=float(_CFG["fusion"]["symptom_weight"]),
         temperature=float(_CFG["fusion"]["temperature"]),
+        symptom_only_min_reliability=float(_CFG["fusion"].get("symptom_only_min_reliability", 0.6)),
         image_confidence_hi=float(_CFG["image"]["image_confidence_hi"]),
         rule_threshold=float(_CFG["fusion"]["rule_threshold"]),
         contradiction_threshold=float(_CFG["fusion"]["contradiction_threshold"]),
@@ -195,6 +234,7 @@ def predict_full(image_bytes: Optional[bytes] = None, symptoms_dict: Optional[Di
         cfg=fusion_cfg,
         gradcam_path=gradcam_path,
         top_symptoms=top_sym,
+        symptom_reliability=symptom_reliability,
     )
 
     # guarantee full label support
@@ -208,5 +248,11 @@ def predict_full(image_bytes: Optional[bytes] = None, symptoms_dict: Optional[Di
     result["explain"]["disease_symptom_catalog"] = rule_obj.get("disease_symptom_catalog", {})
     result["explain"]["catalog_match_scores"] = rule_obj.get("catalog_scores", {})
     result["explain"]["clinical_advisories"] = rule_obj.get("advisories", {})
+    result["explain"]["symptom_model_training_mode"] = symptom_meta.get("training_mode", "unknown")
+    result["explain"]["symptom_model_warning"] = symptom_meta.get("warning", "")
+    result["explain"]["symptom_reliability"] = float(symptom_reliability)
+    result["explain"]["symptom_advisory_only"] = bool(
+        image_bytes is None and symptom_reliability < float(_CFG["fusion"].get("symptom_only_min_reliability", 0.6))
+    )
 
     return result

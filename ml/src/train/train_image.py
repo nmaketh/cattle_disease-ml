@@ -5,7 +5,7 @@ from typing import Dict, Tuple
 import numpy as np
 import pandas as pd
 import tensorflow as tf
-from sklearn.metrics import classification_report
+from sklearn.metrics import classification_report, f1_score
 
 from src.models.gradcam import make_gradcam, save_gradcam
 from src.models.image_mobilenetv2 import (
@@ -38,6 +38,7 @@ def make_ds(df: pd.DataFrame, img_size: int, batch_size: int, training: bool, se
         return img, label
 
     ds = ds.map(_load, num_parallel_calls=tf.data.AUTOTUNE)
+    ds = ds.ignore_errors()
     if training:
         ds = ds.cache()
         ds = ds.shuffle(buffer_size=max(1024, len(paths)), seed=seed, reshuffle_each_iteration=True)
@@ -76,6 +77,30 @@ def evaluate_text(y_true_ids: np.ndarray, y_pred_ids: np.ndarray) -> str:
     y_pred = [ID_TO_LABEL[int(x)] for x in y_pred_ids]
     rep = classification_report(y_true, y_pred, labels=["Normal", "LSD", "FMD"], zero_division=0)
     return rep
+
+
+def tune_class_bias(
+    y_prob_val: np.ndarray,
+    y_true_val_ids: np.ndarray,
+    labels: Tuple[str, str, str] = ("Normal", "LSD", "FMD"),
+) -> np.ndarray:
+    # Learn multiplicative class bias on validation only to improve macro F1.
+    best_f1 = -1.0
+    best_w = np.ones(len(labels), dtype=float)
+    y_true_lbl = np.array([labels[int(i)] for i in y_true_val_ids])
+
+    grid = np.arange(0.4, 2.61, 0.1)
+    for wn in grid:
+        for wl in grid:
+            for wf in grid:
+                w = np.array([wn, wl, wf], dtype=float)
+                pred_ids = np.argmax(y_prob_val * w[None, :], axis=1)
+                pred_lbl = np.array([labels[int(i)] for i in pred_ids])
+                m = float(f1_score(y_true_lbl, pred_lbl, labels=list(labels), average="macro", zero_division=0))
+                if m > best_f1:
+                    best_f1 = m
+                    best_w = w
+    return best_w
 
 
 def main() -> int:
@@ -143,11 +168,23 @@ def main() -> int:
 
     y_true = np.array(test_df["label"].map(LABEL_TO_ID).tolist(), dtype=int)
     y_prob = model.predict(ds_test, verbose=0)
-    y_pred = np.argmax(y_prob, axis=1)
+    y_true_val = np.array(val_df["label"].map(LABEL_TO_ID).tolist(), dtype=int)
+    y_prob_val = model.predict(ds_val, verbose=0)
+
+    class_bias = tune_class_bias(y_prob_val, y_true_val)
+    y_pred = np.argmax(y_prob * class_bias[None, :], axis=1)
 
     np.save(image_dir / "test_probs.npy", y_prob)
     np.save(image_dir / "test_true.npy", y_true)
     test_df.assign(pred=[ID_TO_LABEL[int(x)] for x in y_pred]).to_csv(image_dir / "test_predictions.csv", index=False)
+    write_json(
+        image_dir / "decision_calibration.json",
+        {
+            "labels": ["Normal", "LSD", "FMD"],
+            "class_bias": [float(x) for x in class_bias.tolist()],
+            "note": "Bias learned on validation split only; applied at decision stage to maximize macro F1.",
+        },
+    )
 
     report_text = evaluate_text(y_true, y_pred)
     (reports_dir / "image_report.txt").write_text(report_text, encoding="utf-8")
@@ -184,6 +221,7 @@ def main() -> int:
         "history_head": {k: [float(x) for x in v] for k, v in hist_head.history.items()},
         "history_finetune": {k: [float(x) for x in v] for k, v in hist_ft.history.items()},
         "test_report": report_text,
+        "decision_class_bias": [float(x) for x in class_bias.tolist()],
     }
     (image_dir / "training_summary.json").write_text(json.dumps(summary, indent=2), encoding="utf-8")
 

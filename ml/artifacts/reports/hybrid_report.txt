@@ -1,43 +1,46 @@
 Hybrid Ablation Report
 ==============================
 Pairing strategy: class-aware pseudo pairing (no shared case IDs available).
-Image-only macro F1: 0.8664
-Hybrid macro F1 (N/L/F projection): 0.8682
-Delta (Hybrid - Image): +0.0018
+claim guard: N/L/F metrics are validated for ML image classification; ECF/CBPP outputs are rules-supported under current symptom data constraints.
+symptom_training_mode: bootstrap_weak
+symptom_reliability_used: 0.20
+Image-only macro F1: 0.9250
+Hybrid macro F1 (N/L/F projection): 0.9276
+Delta (Hybrid - Image): +0.0026
 
 Image-only report:
               precision    recall  f1-score   support
 
-      Normal       0.93      0.86      0.89       284
-         LSD       0.97      0.85      0.91       230
-         FMD       0.67      0.98      0.80       113
+      Normal       0.92      0.92      0.92       309
+         LSD       0.91      0.88      0.90       229
+         FMD       0.95      0.98      0.96       229
 
-    accuracy                           0.88       627
-   macro avg       0.86      0.90      0.87       627
-weighted avg       0.90      0.88      0.88       627
+    accuracy                           0.92       767
+   macro avg       0.92      0.93      0.93       767
+weighted avg       0.92      0.92      0.92       767
 
 
 Hybrid report:
               precision    recall  f1-score   support
 
-      Normal       0.93      0.86      0.89       284
-         LSD       0.98      0.85      0.91       230
-         FMD       0.68      0.98      0.80       113
+      Normal       0.92      0.92      0.92       309
+         LSD       0.91      0.89      0.90       229
+         FMD       0.95      0.98      0.96       229
          ECF       0.00      0.00      0.00         0
         CBPP       0.00      0.00      0.00         0
 
-    accuracy                           0.88       627
-   macro avg       0.52      0.54      0.52       627
-weighted avg       0.90      0.88      0.88       627
+    accuracy                           0.93       767
+   macro avg       0.56      0.56      0.56       767
+weighted avg       0.93      0.93      0.93       767
 
 
 Hybrid N/L/F report (ablation metric space):
               precision    recall  f1-score   support
 
-      Normal       0.93      0.86      0.89       284
-         LSD       0.98      0.85      0.91       230
-         FMD       0.68      0.98      0.80       113
+      Normal       0.92      0.92      0.92       309
+         LSD       0.91      0.89      0.90       229
+         FMD       0.95      0.98      0.96       229
 
-    accuracy                           0.88       627
-   macro avg       0.86      0.90      0.87       627
-weighted avg       0.90      0.88      0.88       627
+    accuracy                           0.93       767
+   macro avg       0.93      0.93      0.93       767
+weighted avg       0.93      0.93      0.93       767

@@ -12,5 +12,5 @@ csv: C:\cattle_disease_ml\data\raw\researcher1548_livestock_symptoms_and_disease
   format: list
   diseases_before: ['anthrax', 'blackleg', 'foot and mouth', 'lumpy virus', 'pneumonia']
   diseases_after: ['FMD', 'LSD']
-merged_rows: 17444
-merged_class_counts: {'FMD': 9746, 'LSD': 7698}
+merged_rows: 17
+merged_class_counts: {'FMD': 16, 'LSD': 1}

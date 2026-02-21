@@ -33,8 +33,21 @@ _SYMPTOM_SYNONYMS = {
 }
 
 
+def _norm_key(x: str) -> str:
+    return str(x).strip().lower().replace("-", "_").replace(" ", "_").replace("/", "_")
+
+
+def _normalized_symptoms(symptoms: Dict[str, object]) -> Dict[str, object]:
+    out: Dict[str, object] = {}
+    for k, v in symptoms.items():
+        nk = _norm_key(k)
+        if nk:
+            out[nk] = v
+    return out
+
+
 def _symptom_value(symptoms: Dict[str, object], key: str) -> float:
-    val = symptoms.get(key, 0)
+    val = symptoms.get(_norm_key(key), symptoms.get(key, 0))
     if isinstance(val, str):
         n = val.strip().lower()
         if n in {"yes", "true", "1", "present", "positive"}:
@@ -90,13 +103,14 @@ def _catalog_match_scores(symptoms_dict: Dict[str, object], catalog: Dict[str, D
 
 
 def rules_predict(symptoms_dict: Dict[str, object], cfg: RulesConfig) -> Dict[str, object]:
-    ecf_score, ecf_triggers = score_ecf(symptoms_dict, cfg)
-    cbpp_score, cbpp_triggers = score_cbpp(symptoms_dict, cfg)
+    sx = _normalized_symptoms(symptoms_dict)
+    ecf_score, ecf_triggers = score_ecf(sx, cfg)
+    cbpp_score, cbpp_triggers = score_cbpp(sx, cfg)
 
     ranked = sorted([("ECF", ecf_score), ("CBPP", cbpp_score)], key=lambda x: x[1], reverse=True)
 
     catalog = cfg.disease_symptom_catalog or {}
-    catalog_scores = _catalog_match_scores(symptoms_dict, catalog) if catalog else {}
+    catalog_scores = _catalog_match_scores(sx, catalog) if catalog else {}
 
     return {
         "candidate_labels": [x[0] for x in ranked],

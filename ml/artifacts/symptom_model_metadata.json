@@ -1,0 +1,29 @@
+{
+  "training_mode": "bootstrap_weak",
+  "real_unique_rows": 17,
+  "real_rows": 17,
+  "synthetic_rows_added": 2000,
+  "labels_trained": [
+    "CBPP",
+    "ECF",
+    "FMD",
+    "LSD",
+    "Normal"
+  ],
+  "split_source_counts": {
+    "train": {
+      "synthetic": 1404,
+      "real": 7
+    },
+    "val": {
+      "synthetic": 297,
+      "real": 6
+    },
+    "test": {
+      "synthetic": 299,
+      "real": 4
+    }
+  },
+  "eval_has_synthetic_rows": true,
+  "warning": "Symptom model includes synthetic bootstrap examples and should be treated as weak evidence."
+}

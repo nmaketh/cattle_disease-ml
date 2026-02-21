@@ -1,14 +1,22 @@
 {
-  "image_labels": [
-    "Normal",
-    "LSD",
-    "FMD"
-  ],
   "final_labels": [
     "Normal",
     "LSD",
     "FMD",
     "ECF",
     "CBPP"
-  ]
+  ],
+  "symptom_train_labels": [
+    "CBPP",
+    "ECF",
+    "FMD",
+    "LSD",
+    "Normal"
+  ],
+  "image_labels": [
+    "Normal",
+    "LSD",
+    "FMD"
+  ],
+  "symptom_training_mode": "bootstrap_weak"
 }

@@ -1,6 +1,7 @@
 {
   "image_weight": 0.65,
   "symptom_weight": 0.35,
+  "symptom_reliability": 0.2,
   "temperature": 1.1,
   "image_confidence_hi": 0.8,
   "rule_threshold": 0.62,

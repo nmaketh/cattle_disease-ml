@@ -25,3 +25,9 @@ tmp/
 # Optional: keep repo lean; do not track generated reports by default
 ml/artifacts/reports/*.png
 ml/artifacts/reports/*.json
+
+# Temporary downloaded dataset dumps (outside canonical ml/data paths)
+Cattle_disease-Detection-11/
+Cattle_disease-Detection-11-yolov8/
+Foot-and-Mouth-Disease-1-openai/
+Foot-and-Mouth-Disease-1-yolov8/

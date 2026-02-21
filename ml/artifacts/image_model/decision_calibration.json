@@ -1,0 +1,13 @@
+{
+  "labels": [
+    "Normal",
+    "LSD",
+    "FMD"
+  ],
+  "class_bias": [
+    0.6,
+    2.4999999999999996,
+    0.4
+  ],
+  "note": "Bias learned on validation split only; applied at decision stage to maximize macro F1."
+}

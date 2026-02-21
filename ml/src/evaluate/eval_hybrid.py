@@ -29,7 +29,9 @@ def make_ds(df: pd.DataFrame, img_size: int, batch_size: int) -> tf.data.Dataset
         img = tf.cast(img, tf.float32)
         return img, label
 
-    return ds.map(_load, num_parallel_calls=tf.data.AUTOTUNE).batch(batch_size).prefetch(tf.data.AUTOTUNE)
+    ds = ds.map(_load, num_parallel_calls=tf.data.AUTOTUNE)
+    ds = ds.ignore_errors()
+    return ds.batch(batch_size).prefetch(tf.data.AUTOTUNE)
 
 
 def main() -> int:
@@ -47,6 +49,20 @@ def main() -> int:
 
     img_layer = tf.keras.layers.TFSMLayer(str(image_dir), call_endpoint="serve")
     sym_model = load_symptom_model(str(symptom_model_path))
+    calib_path = image_dir / "decision_calibration.json"
+    class_bias = np.ones(3, dtype=float)
+    if calib_path.exists():
+        class_bias = np.array(read_json(calib_path).get("class_bias", [1.0, 1.0, 1.0]), dtype=float)
+
+    sym_meta_path = artifact_root / "symptom_model_metadata.json"
+    sym_meta = read_json(sym_meta_path) if sym_meta_path.exists() else {}
+    mode = str(sym_meta.get("training_mode", "unknown")).strip().lower()
+    if mode == "real_only":
+        symptom_reliability = float(cfg["fusion"].get("symptom_reliability_real", 1.0))
+    elif mode == "bootstrap_weak":
+        symptom_reliability = float(cfg["fusion"].get("symptom_reliability_bootstrap", 0.2))
+    else:
+        symptom_reliability = float(cfg["fusion"].get("symptom_reliability_unknown", 0.5))
 
     split_df = pd.read_csv(manifest)
     test_df = split_df[split_df["split"] == "test"].copy().reset_index(drop=True)
@@ -81,6 +97,8 @@ def main() -> int:
             out = list(out.values())[0]
         image_probs.append(np.array(out))
     image_probs = np.concatenate(image_probs, axis=0)
+    image_probs = image_probs * class_bias[None, :]
+    image_probs = image_probs / np.clip(np.sum(image_probs, axis=1, keepdims=True), 1e-8, None)
 
     sym_x = symptom_df[symptom_features].values if symptom_features else np.zeros((n, 0))
     sym_prob = sym_model.predict_proba(sym_x)
@@ -90,6 +108,7 @@ def main() -> int:
         image_weight=float(cfg["fusion"]["image_weight"]),
         symptom_weight=float(cfg["fusion"]["symptom_weight"]),
         temperature=float(cfg["fusion"]["temperature"]),
+        symptom_only_min_reliability=float(cfg["fusion"].get("symptom_only_min_reliability", 0.6)),
         image_confidence_hi=float(cfg["image"]["image_confidence_hi"]),
         rule_threshold=float(cfg["fusion"]["rule_threshold"]),
         contradiction_threshold=float(cfg["fusion"]["contradiction_threshold"]),
@@ -121,6 +140,7 @@ def main() -> int:
             cfg=fusion_cfg,
             gradcam_path=None,
             top_symptoms=top_sym,
+            symptom_reliability=symptom_reliability,
         )
         y_hybrid.append(out["final_label"])
         probs_nlf = {k: float(out["probs"].get(k, 0.0)) for k in ["Normal", "LSD", "FMD"]}
@@ -147,6 +167,9 @@ def main() -> int:
         "Hybrid Ablation Report",
         "=" * 30,
         "Pairing strategy: class-aware pseudo pairing (no shared case IDs available).",
+        "claim guard: N/L/F metrics are validated for ML image classification; ECF/CBPP outputs are rules-supported under current symptom data constraints.",
+        f"symptom_training_mode: {mode}",
+        f"symptom_reliability_used: {symptom_reliability:.2f}",
         f"Image-only macro F1: {macro_f1_img:.4f}",
         f"Hybrid macro F1 (N/L/F projection): {macro_f1_hyb:.4f}",
         f"Delta (Hybrid - Image): {macro_f1_hyb - macro_f1_img:+.4f}",
@@ -169,6 +192,8 @@ def main() -> int:
         {
             "image_weight": fusion_cfg.image_weight,
             "symptom_weight": fusion_cfg.symptom_weight,
+            "symptom_reliability": symptom_reliability,
+            "symptom_only_min_reliability": fusion_cfg.symptom_only_min_reliability,
             "temperature": fusion_cfg.temperature,
             "image_confidence_hi": fusion_cfg.image_confidence_hi,
             "rule_threshold": fusion_cfg.rule_threshold,

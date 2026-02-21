@@ -2,8 +2,7 @@
 project_root: .
 paths:
   image_sources:
-    - data/images_multiclass
-    - data/images_lsd_fmd
+    - ml/data/processed/images_merged
   symptoms_sources:
     - data/raw/captaingee_livestock_disease_diagnosis_dataset/animal_disease_dataset.csv
     - data/raw/researcher1548_livestock_symptoms_and_diseases/animal_disease_dataset.csv
@@ -42,18 +41,90 @@ fusion:
   contradiction_threshold: 0.75
 rules:
   ecf_weights:
-    fever: 0.24
-    swollen_lymph_nodes: 0.22
-    eye_discharge: 0.18
-    nasal_discharge: 0.16
-    difficulty_breathing: 0.12
-    depression: 0.08
+    fever: 0.18
+    swollen_lymph_nodes: 0.24
+    eye_discharge: 0.14
+    nasal_discharge: 0.10
+    difficulty_breathing: 0.16
+    loss_of_appetite: 0.12
+    depression: 0.06
   cbpp_weights:
-    fever: 0.20
-    coughing: 0.25
-    difficulty_breathing: 0.22
-    nasal_discharge: 0.16
-    chest_pain_signs: 0.17
+    fever: 0.14
+    coughing: 0.21
+    difficulty_breathing: 0.17
+    rapid_shallow_breathing: 0.12
+    chest_pain_signs: 0.16
+    nasal_discharge: 0.08
+    grunt_on_expiration: 0.08
+    extended_neck_posture: 0.04
+  disease_symptom_catalog:
+    Normal:
+      core: []
+      supporting:
+        - bright_eyes
+        - normal_feed_intake
+        - normal_respiration
+        - normal_mobility
+        - healthy_skin
+        - no_lesions
+    LSD:
+      core:
+        - fever
+        - painless_lumps
+        - skin_nodules
+        - enlarged_lymph_nodes
+      supporting:
+        - nasal_discharge
+        - eye_discharge
+        - reduced_milk_yield
+        - limb_swelling
+        - depression
+        - loss_of_appetite
+    FMD:
+      core:
+        - fever
+        - mouth_blisters
+        - tongue_sores
+        - foot_lesions
+        - drooling
+      supporting:
+        - lameness
+        - loss_of_appetite
+        - reduced_milk_yield
+        - difficulty_walking
+        - gum_sores
+    ECF:
+      core:
+        - fever
+        - swollen_lymph_nodes
+        - difficulty_breathing
+        - loss_of_appetite
+      supporting:
+        - eye_discharge
+        - nasal_discharge
+        - diarrhoea
+        - anaemia
+        - neurological_signs
+        - corneal_opacity
+        - depression
+    CBPP:
+      core:
+        - fever
+        - coughing
+        - difficulty_breathing
+        - rapid_shallow_breathing
+        - chest_pain_signs
+      supporting:
+        - nasal_discharge
+        - extended_neck_posture
+        - head_lowered
+        - arched_back
+        - grunt_on_expiration
+        - recumbency
+        - weight_loss
+        - exercise_intolerance
+        - anorexia
+        - depression
 thresholds:
   urgent_rule_score: 0.78
   low_confidence: 0.45

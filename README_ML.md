@@ -156,6 +156,7 @@ python -m uvicorn src.infer.api:app --host 0.0.0.0 --port 8000
 
 Swagger UI:
 - `http://127.0.0.1:8000/docs`
+- Symptom catalog endpoint: `GET /symptoms/catalog`
 
 PowerShell examples:
 
@@ -201,11 +202,26 @@ Or with Compose:
 docker compose up --build
 ```
 
+## Deploy (Render Blueprint)
+
+This repo includes `render.yaml` for one-click deployment on Render.
+
+Render settings are pre-defined for TensorFlow stability:
+- single worker
+- constrained thread env vars
+- `healthCheckPath: /health`
+
+Use Render:
+1. New -> Blueprint
+2. Select this repo
+3. Deploy using `render.yaml`
+
 ## Explainability
 
 - Image explainability: Grad-CAM examples exported to `ml/artifacts/reports/gradcam_examples/`.
 - Symptom explainability: top active symptom importances from RF feature importances.
 - Rule explainability: triggered ECF/CBPP symptoms in `explain.rule_triggers`.
+- Clinical advisories are included in `explain.clinical_advisories`.
 
 ## Fusion and Provenance
 

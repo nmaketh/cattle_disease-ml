@@ -3,7 +3,7 @@
 from fastapi import FastAPI, File, Form, HTTPException, UploadFile
 from pydantic import BaseModel, Field
 
-from src.infer.predict import predict_full, predict_image, predict_symptoms
+from src.infer.predict import _CFG, predict_full, predict_image, predict_symptoms
 
 
 class SymptomsRequest(BaseModel):
@@ -24,6 +24,14 @@ app = FastAPI(
 @app.get("/health")
 def health() -> Dict[str, str]:
     return {"status": "ok"}
+
+
+@app.get("/symptoms/catalog")
+def symptom_catalog() -> Dict[str, Any]:
+    return {
+        "labels": _CFG["labels"]["final_labels"],
+        "catalog": _CFG.get("rules", {}).get("disease_symptom_catalog", {}),
+    }
 
 
 @app.post("/predict/image")

@@ -169,7 +169,11 @@ def predict_full(image_bytes: Optional[bytes] = None, symptoms_dict: Optional[Di
     if symptoms_dict:
         symptom_probs, _, _, top_sym = predict_symptoms(symptoms_dict)
 
-    rule_cfg = RulesConfig(ecf_weights=_CFG["rules"]["ecf_weights"], cbpp_weights=_CFG["rules"]["cbpp_weights"])
+    rule_cfg = RulesConfig(
+        ecf_weights=_CFG["rules"]["ecf_weights"],
+        cbpp_weights=_CFG["rules"]["cbpp_weights"],
+        disease_symptom_catalog=_CFG["rules"].get("disease_symptom_catalog", {}),
+    )
     rule_obj = rules_predict(symptoms_dict, rule_cfg)
 
     fusion_cfg = FusionConfig(
@@ -199,5 +203,10 @@ def predict_full(image_bytes: Optional[bytes] = None, symptoms_dict: Optional[Di
     total = sum(result["probs"].values())
     if total > 0:
         result["probs"] = {k: float(v) / total for k, v in result["probs"].items()}
+
+    result.setdefault("explain", {})
+    result["explain"]["disease_symptom_catalog"] = rule_obj.get("disease_symptom_catalog", {})
+    result["explain"]["catalog_match_scores"] = rule_obj.get("catalog_scores", {})
+    result["explain"]["clinical_advisories"] = rule_obj.get("advisories", {})
 
     return result

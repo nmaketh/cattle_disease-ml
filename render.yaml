@@ -1,0 +1,21 @@
+﻿services:
+  - type: web
+    name: cattle-disease-ml
+    runtime: python
+    buildCommand: pip install -r ml/requirements.txt
+    startCommand: PYTHONPATH=ml ML_CONFIG_PATH=ml/configs/config.yaml OMP_NUM_THREADS=1 TF_NUM_INTRAOP_THREADS=1 TF_NUM_INTEROP_THREADS=1 TF_ENABLE_ONEDNN_OPTS=0 python -m uvicorn src.infer.api:app --host 0.0.0.0 --port $PORT --workers 1
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: PYTHONPATH
+        value: ml
+      - key: ML_CONFIG_PATH
+        value: ml/configs/config.yaml
+      - key: OMP_NUM_THREADS
+        value: "1"
+      - key: TF_NUM_INTRAOP_THREADS
+        value: "1"
+      - key: TF_NUM_INTEROP_THREADS
+        value: "1"
+      - key: TF_ENABLE_ONEDNN_OPTS
+        value: "0"

@@ -168,6 +168,39 @@ def fuse_predictions(
                     },
                 }
 
+            # Borderline ECF/CBPP rule evidence + consistent symptom signal:
+            # keep conservative behavior but avoid forcing "Normal" for clinically
+            # coherent East Coast Fever / CBPP presentations.
+            symptom_cal = _softmax_temperature(symptom_probs, list(symptom_probs.keys()), cfg.temperature)
+            blended = _zeros()
+            for lbl in FINAL_LABELS:
+                blended[lbl] = 0.45 * float(symptom_cal.get(lbl, 0.0))
+            for lbl in ["ECF", "CBPP"]:
+                blended[lbl] = max(blended[lbl], float(rule_scores.get(lbl, 0.0)))
+            blended["Normal"] = max(blended["Normal"], 0.25)
+            total = sum(blended.values())
+            if total > 0:
+                blended = {k: v / total for k, v in blended.items()}
+
+            best_blended = max(blended, key=blended.get)
+            borderline_rule_threshold = max(0.45, float(cfg.rule_threshold) - 0.12)
+            if best_blended in {"ECF", "CBPP"} and max_rule >= borderline_rule_threshold:
+                return {
+                    "final_label": best_blended,
+                    "confidence": float(blended[best_blended]),
+                    "method": "clinical_rules",
+                    "probs": blended,
+                    "explain": {
+                        "gradcam_path": gradcam_path,
+                        "top_symptoms": top_symptoms,
+                        "rule_triggers": rule_triggers,
+                    },
+                    "recommendation_flags": {
+                        "retake_image": True,
+                        "contact_vet_urgent": max_rule >= cfg.urgent_rule_score,
+                    },
+                }
+
             # No strong rule evidence and weak symptom model: avoid overcalling disease.
             final = _zeros()
             # Keep a deliberately uncertain distribution to avoid false certainty.

@@ -1,34 +1,13 @@
-Symptom Evaluation Report
+Symptom Training Summary
 ==============================
-training_mode: bootstrap_weak
-macro_f1_all_rows: 0.7130
-warning: Symptom model includes synthetic bootstrap examples and should be treated as weak evidence.
-note: Symptom-only metrics are not equivalent to validated 5-class clinical diagnostic performance.
-test_rows_total: 303
-test_rows_real: 4
-test_rows_synthetic: 299
-warning: real-only symptom test sample is very small; real-only metrics are unstable.
-macro_f1_real_only: 1.0000
+selected_model: HistGradientBoostingClassifier
+selected_candidate: hist_gradient_boosting
+train_macro_f1: 0.9033
+val_macro_f1: 0.8779
+test_macro_f1: 0.8866
+overfit_gap_train_val: 0.0254
 
-Real-only report:
-              precision    recall  f1-score   support
-
-         FMD       1.00      1.00      1.00         4
-
-    accuracy                           1.00         4
-   macro avg       1.00      1.00      1.00         4
-weighted avg       1.00      1.00      1.00         4
-
-
-All evaluated rows report:
-              precision    recall  f1-score   support
-
-        CBPP       0.70      0.52      0.60        60
-         ECF       0.78      0.75      0.76        60
-         FMD       0.83      0.68      0.75        63
-         LSD       0.87      0.80      0.83        60
-      Normal       0.51      0.80      0.62        60
-
-    accuracy                           0.71       303
-   macro avg       0.74      0.71      0.71       303
-weighted avg       0.74      0.71      0.71       303
+candidate_results:
+  - hist_gradient_boosting: cv=0.878805 train=0.9033 val=0.877904
+  - random_forest: cv=0.848883 train=0.875195 val=0.857584
+  - extra_trees: cv=0.844933 train=0.868749 val=0.85413

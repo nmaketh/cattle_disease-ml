@@ -1,16 +1,11 @@
 Symptom Merge Report
 ==============================
-csv: C:\cattle_disease_ml\data\raw\captaingee_livestock_disease_diagnosis_dataset\animal_disease_dataset.csv
-  input_rows: 43778
-  post_filter_rows: 8722
-  format: list
-  diseases_before: ['anthrax', 'blackleg', 'foot and mouth', 'lumpy virus', 'pneumonia']
-  diseases_after: ['FMD', 'LSD']
-csv: C:\cattle_disease_ml\data\raw\researcher1548_livestock_symptoms_and_diseases\animal_disease_dataset.csv
-  input_rows: 43778
-  post_filter_rows: 8722
-  format: list
-  diseases_before: ['anthrax', 'blackleg', 'foot and mouth', 'lumpy virus', 'pneumonia']
-  diseases_after: ['FMD', 'LSD']
-merged_rows: 17
-merged_class_counts: {'FMD': 16, 'LSD': 1}
+csv: C:\Users\HP\cattle_disease_app\cattle_disease_ml\data\raw\tonic_default\synthetic_cattle_symptoms.csv
+  input_rows: 20000
+  post_filter_rows: 20000
+  format: wide
+  diseases_before: ['CBPP', 'ECF', 'FMD', 'LSD']
+  diseases_after: ['CBPP', 'ECF', 'FMD', 'LSD']
+  feature_counts: {'binary': 24, 'numeric': 3, 'categorical': 11}
+merged_rows: 20000
+merged_class_counts: {'FMD': 5793, 'LSD': 5266, 'ECF': 4669, 'CBPP': 4272}

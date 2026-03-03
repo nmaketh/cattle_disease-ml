@@ -10,13 +10,12 @@
     "CBPP",
     "ECF",
     "FMD",
-    "LSD",
-    "Normal"
+    "LSD"
   ],
   "image_labels": [
     "Normal",
     "LSD",
     "FMD"
   ],
-  "symptom_training_mode": "bootstrap_weak"
+  "symptom_training_mode": "real_only"
 }

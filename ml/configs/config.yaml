@@ -1,6 +1,7 @@
 ﻿seed: 42
 project_root: .
 paths:
+  tonic_symptoms_csv: data/raw/tonic_default/synthetic_cattle_symptoms.csv
   image_sources:
     - ml/data/processed/images_merged
   symptoms_sources:
@@ -29,14 +30,32 @@ image:
   reduce_lr_patience: 2
   image_confidence_hi: 0.8
 symptom:
-  model_type: random_forest
-  n_estimators: 500
-  max_depth: 24
-  min_samples_leaf: 1
+  # Primary candidate: HistGradientBoostingClassifier — best tabular generalisation,
+  # built-in L2 regularisation, ~10-50 MB model vs 591 MB overfitted RF.
+  # RF / ExtraTrees kept as fallback with corrected regularisation params.
+  model_type: hist_gradient_boosting
+  model_candidates: ["hist_gradient_boosting", "random_forest", "extra_trees"]
+  # Shared defaults (each candidate's search space overrides these)
+  n_estimators: 300        # RF/ET; HGB uses max_iter inside its search space
+  max_depth: 12            # RF/ET ceiling; was 24 (caused train_f1=1.0)
+  min_samples_leaf: 6      # RF/ET floor; was 1 (single-sample leaves → overfit)
+  # Hyperparameter search
+  search_n_iter: 40        # RandomizedSearchCV iterations per candidate (was 24)
+  cv_folds: 5              # StratifiedKFold splits (was 4)
+  # Quality gates
+  target_macro_f1: 0.90
+  max_overfit_gap: 0.03    # Stronger generalization gate on train-vs-val gap
+  selection_overfit_penalty: 1.00
+  cv_max_overfit_gap: 0.03
+  cv_overfit_penalty: 1.25
+  # Categorical feature handling
+  include_meta_features: true
+  max_categorical_levels: 12
+  # Bootstrap / synthetic data
   min_unique_rows: 100
   bootstrap_if_insufficient: true
   bootstrap_samples_per_label: 400
-  bootstrap_labels: ["Normal", "LSD", "FMD", "ECF", "CBPP"]
+  bootstrap_labels: ["LSD", "FMD", "ECF", "CBPP"]  # Normal excluded — symptom model is 4-class only
   bootstrap_core_prob: 0.78
   bootstrap_support_prob: 0.42
   bootstrap_noise_prob: 0.03

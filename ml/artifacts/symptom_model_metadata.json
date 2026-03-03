@@ -1,29 +1,221 @@
 {
-  "training_mode": "bootstrap_weak",
-  "real_unique_rows": 17,
-  "real_rows": 17,
-  "synthetic_rows_added": 2000,
+  "training_mode": "real_only",
+  "real_unique_rows": 20000,
+  "real_rows": 20000,
+  "synthetic_rows_added": 0,
   "labels_trained": [
     "CBPP",
     "ECF",
     "FMD",
-    "LSD",
-    "Normal"
+    "LSD"
   ],
   "split_source_counts": {
     "train": {
-      "synthetic": 1404,
-      "real": 7
+      "real": 14000
     },
     "val": {
-      "synthetic": 297,
-      "real": 6
+      "real": 3000
     },
     "test": {
-      "synthetic": 299,
-      "real": 4
+      "real": 3000
     }
   },
-  "eval_has_synthetic_rows": true,
-  "warning": "Symptom model includes synthetic bootstrap examples and should be treated as weak evidence."
+  "eval_has_synthetic_rows": false,
+  "warning": "",
+  "selected_model": "HistGradientBoostingClassifier",
+  "selected_candidate": "hist_gradient_boosting",
+  "train_macro_f1": 0.9033002754263415,
+  "val_macro_f1": 0.8779038793622285,
+  "test_macro_f1": 0.8865955663849817,
+  "overfit_gap_train_val": 0.025396396064113036,
+  "generalization_gap_val_test": -0.008691687022753247,
+  "target_macro_f1": 0.9,
+  "max_overfit_gap": 0.03,
+  "candidate_results": [
+    {
+      "name": "hist_gradient_boosting",
+      "cv_macro_f1": 0.878805,
+      "cv_overfit_gap": 0.029677,
+      "train_macro_f1": 0.9033,
+      "val_macro_f1": 0.877904,
+      "overfit_gap": 0.025396,
+      "overfit_excess": 0.0,
+      "selection_score": 0.877904,
+      "best_params": {
+        "validation_fraction": 0.2,
+        "n_iter_no_change": 20,
+        "min_samples_leaf": 30,
+        "max_leaf_nodes": 12,
+        "max_iter": 320,
+        "max_depth": 3,
+        "learning_rate": 0.06,
+        "l2_regularization": 0.1,
+        "early_stopping": true
+      }
+    },
+    {
+      "name": "random_forest",
+      "cv_macro_f1": 0.848883,
+      "cv_overfit_gap": 0.024285,
+      "train_macro_f1": 0.875195,
+      "val_macro_f1": 0.857584,
+      "overfit_gap": 0.017611,
+      "overfit_excess": 0.0,
+      "selection_score": 0.857584,
+      "best_params": {
+        "n_estimators": 300,
+        "min_samples_split": 24,
+        "min_samples_leaf": 10,
+        "max_samples": 0.7,
+        "max_features": 0.4,
+        "max_depth": 12,
+        "ccp_alpha": 0.0,
+        "bootstrap": true
+      }
+    },
+    {
+      "name": "extra_trees",
+      "cv_macro_f1": 0.844933,
+      "cv_overfit_gap": 0.021414,
+      "train_macro_f1": 0.868749,
+      "val_macro_f1": 0.85413,
+      "overfit_gap": 0.014619,
+      "overfit_excess": 0.0,
+      "selection_score": 0.85413,
+      "best_params": {
+        "n_estimators": 300,
+        "min_samples_split": 24,
+        "min_samples_leaf": 10,
+        "max_samples": 0.7,
+        "max_features": 0.4,
+        "max_depth": 12,
+        "ccp_alpha": 0.0,
+        "bootstrap": true
+      }
+    }
+  ],
+  "top_features": [
+    {
+      "feature": "days_since_onset",
+      "importance": 0.166589
+    },
+    {
+      "feature": "disease_stage_late",
+      "importance": 0.069977
+    },
+    {
+      "feature": "fe_fmd_core",
+      "importance": 0.05623
+    },
+    {
+      "feature": "fe_lsd_vs_fmd",
+      "importance": 0.037056
+    },
+    {
+      "feature": "disease_stage_early",
+      "importance": 0.029457
+    },
+    {
+      "feature": "fe_respiratory",
+      "importance": 0.023313
+    },
+    {
+      "feature": "fe_ecf_vs_cbpp",
+      "importance": 0.012661
+    },
+    {
+      "feature": "skin_nodules",
+      "importance": 0.01159
+    },
+    {
+      "feature": "tick_exposure_recent",
+      "importance": 0.010463
+    },
+    {
+      "feature": "fe_cbpp_core",
+      "importance": 0.007298
+    },
+    {
+      "feature": "management_system_agro pastoral",
+      "importance": 0.005582
+    },
+    {
+      "feature": "fe_tick_x_lymph",
+      "importance": 0.004979
+    },
+    {
+      "feature": "fe_lymph",
+      "importance": 0.004952
+    },
+    {
+      "feature": "painless_lumps",
+      "importance": 0.003747
+    },
+    {
+      "feature": "enlarged_lymph_nodes",
+      "importance": 0.003271
+    },
+    {
+      "feature": "fe_lsd_core",
+      "importance": 0.002744
+    },
+    {
+      "feature": "fe_total_symptoms",
+      "importance": 0.002141
+    },
+    {
+      "feature": "foot_lesions",
+      "importance": 0.002127
+    },
+    {
+      "feature": "difficulty_breathing",
+      "importance": 0.00204
+    },
+    {
+      "feature": "fe_ecf_core",
+      "importance": 0.001869
+    }
+  ],
+  "test_classification_report": {
+    "CBPP": {
+      "precision": 0.877742946708464,
+      "recall": 0.8736349453978159,
+      "f1-score": 0.8756841282251759,
+      "support": 641.0
+    },
+    "ECF": {
+      "precision": 0.8306010928961749,
+      "recall": 0.8685714285714285,
+      "f1-score": 0.8491620111731844,
+      "support": 700.0
+    },
+    "FMD": {
+      "precision": 0.9240506329113924,
+      "recall": 0.9240506329113924,
+      "f1-score": 0.9240506329113924,
+      "support": 869.0
+    },
+    "LSD": {
+      "precision": 0.9145860709592641,
+      "recall": 0.8810126582278481,
+      "f1-score": 0.8974854932301741,
+      "support": 790.0
+    },
+    "accuracy": 0.889,
+    "macro avg": {
+      "precision": 0.8867451858688239,
+      "recall": 0.8868174162771212,
+      "f1-score": 0.8865955663849817,
+      "support": 3000.0
+    },
+    "weighted avg": {
+      "precision": 0.8898589966417555,
+      "recall": 0.889,
+      "f1-score": 0.8892468245551348,
+      "support": 3000.0
+    }
+  },
+  "warnings": [
+    "test macro_f1 0.8866 is below target_macro_f1=0.9000; requires more signal or data."
+  ]
 }

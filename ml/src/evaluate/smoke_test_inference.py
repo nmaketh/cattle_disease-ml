@@ -45,6 +45,13 @@ def main() -> int:
     missing = required_keys.difference(full.keys())
     if missing:
         raise AssertionError(f"Missing full response keys: {missing}")
+    explain = full.get("explain")
+    if not isinstance(explain, dict):
+        raise AssertionError("Expected explain payload to be a dict.")
+    explain_required = {"reasoning", "supporting_evidence", "cautionary_evidence", "modality_summary"}
+    explain_missing = explain_required.difference(explain.keys())
+    if explain_missing:
+        raise AssertionError(f"Missing explainability text fields: {explain_missing}")
 
     _assert_prob_dict(full["probs"], ["Normal", "LSD", "FMD", "ECF", "CBPP"])
 
